@@ -16,7 +16,7 @@ const initializeDbAndServer = async () => {
     })
     app.listen(3000, () => console.log('Success'))
   } catch (e) {
-    console.log(`DB Error : ${error.message}`)
+    console.log(`DB Error : ${e.message}`)
     process.exit(1)
   }
 }
@@ -46,39 +46,41 @@ app.get('/movies/', async (request, response) => {
     FROM
     movie;`
 
-  const moviesArray = await db.all(geetMoviesQuery)
+  const moviesArray = await db.all(getMovieQuery)
   response.send(
     moviesArray.map(eachMovie => ({movieName: eachMovie.movie_name})),
   )
 })
 
-app.get('/movies/:movieId/', async (request, response) => {
-  const {movieId} = request.body
+app.get('movies/:movieId/', async (request, response) => {
+  const {movieId} = request.params
   const getMovieQuery = `
-    SELECT
-    *
-    FROM 
-    movie
-        WHERE
-        movie_id = '${movieId}';`
-
+  SELECT
+  FROM
+  movie
+  WHERE
+  movie_id = ${movieId};`
   const movie = await db.get(getMovieQuery)
   response.send(convertMovieDbObjectToresponseObject(movie))
 })
 
 app.post('/movies/', async (request, response) => {
-  const {directoId, movieNmae, leadActor} = request.body
+  const {directorId, movieName, leadActor} = request.body
   const postMovieQuery = `
   INSERT INTO
   movie (director_id, movie_name, lead_actor) 
   VALUES
-  ('${directorId}', '${movieName}', '${leadActor}');`
+  (
+    '${directorId}', 
+    '${movieName}', 
+    '${leadActor}');`
+
   await db.run(postMovieQuery)
   response.send('movie Successfully Added')
 })
 
 app.put('/movies/:movieId/', async (request, response) => {
-  const {directoId, movieName, leadActor} = request.body
+  const {directorId, movieName, leadActor} = request.body
   const {movieId} = request.params
   const updateMovieQuery = `
   UPDATE
@@ -86,7 +88,7 @@ app.put('/movies/:movieId/', async (request, response) => {
   SET 
   director_id = '${directorId}',
   movie_name = '${movieName}',
-  lead_actor = '${leadActor}',
+  lead_actor = '${leadActor}'
   WHERE
   movie_id ='${movieId}';`
 
@@ -121,20 +123,21 @@ app.get('/directors/', async (request, response) => {
   )
 })
 
-app.get('/directors/:directorsId/movies', async (request, response) => {
+app.get('/directors/:directorId/movies', async (request, response) => {
   const {directorId} = request.params
 
   const getDirectorMovieQuery = `
   SELECT
   movie_name
   FROM
-  movie
+  director INNER JOIN movie ON director.director_id = movie.director_id
   WHERE
-  director_id = '${directorId}';`
+  director.director_id = '${directorId}';`
   const moviesArray = await db.all(getDirectorMovieQuery)
   response.send(
-    moviesArray.map(eachMovie => ({movieName: eachMovie.movieName})),
+    moviesArray.map(eachMovie => ({movieName: eachMovie.movie_name})),
   )
 })
 
 module.exports = app
+
