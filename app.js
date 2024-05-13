@@ -1,20 +1,21 @@
 const express = require('express')
 const {open} = require('sqlite')
+const sqlite3 = require('sqlite3')
 const path = require('path')
 const databasePath = path.join(__dirname, 'moviesData.db')
 const app = express()
 app.use(express.json())
 
-db = null
+let db = null
 
 const initializeDbAndServer = async () => {
   try {
-    database = await open({
+    db = await open({
       filename: databasePath,
-      driver: sqlite3.Databse,
+      driver: sqlite3.Database,
     })
     app.listen(3000, () => console.log('Success'))
-  } catch (error) {
+  } catch (e) {
     console.log(`DB Error : ${error.message}`)
     process.exit(1)
   }
@@ -72,7 +73,7 @@ app.post('/movies/', async (request, response) => {
   movie (director_id, movie_name, lead_actor) 
   VALUES
   ('${directorId}', '${movieName}', '${leadActor}');`
-  await databse.run(postMovieQuery)
+  await db.run(postMovieQuery)
   response.send('movie Successfully Added')
 })
 
@@ -89,7 +90,7 @@ app.put('/movies/:movieId/', async (request, response) => {
   WHERE
   movie_id ='${movieId}';`
 
-  await databse.run(updateMovieQuery)
+  await db.run(updateMovieQuery)
   response.send('Movie Details Updated')
 })
 
@@ -101,7 +102,7 @@ app.delete('/movies/:movieId/', async (request, response) => {
     WHERE
     movie_id = '${movieId}';`
 
-  await database.run(deleteMovieQuery)
+  await db.run(deleteMovieQuery)
   response.send('Movie Removed')
 })
 
